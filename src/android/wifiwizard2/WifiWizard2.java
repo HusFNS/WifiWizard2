@@ -468,7 +468,14 @@ public class WifiWizard2 extends CordovaPlugin {
         networkCallback = new ConnectivityManager.NetworkCallback() {
           @Override
           public void onAvailable(Network network) {
-            connectivityManager.setProcessDefaultNetwork(network);
+            connectivityManager.bindProcessToNetwork(network);
+            callbackContext.error("onAvailable");
+          }
+
+          @Override
+          public void onUnavailable() {
+            super.onUnavailable();
+            callbackContext.error("onUnavailable");
           }
         };
 
