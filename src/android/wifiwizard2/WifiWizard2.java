@@ -894,6 +894,7 @@ public class WifiWizard2 extends CordovaPlugin {
       try{
           ConnectivityManager cm = (ConnectivityManager) cordova.getActivity().getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
           cm.unregisterNetworkCallback(this.networkCallback);
+        connectivityManager.bindProcessToNetwork(null);
           return true;
         }
         catch(Exception e) {
