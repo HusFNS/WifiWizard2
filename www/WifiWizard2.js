@@ -159,12 +159,12 @@ var WifiWizard2 = {
             }
 
             WifiWizard2.add(wifiConfig).then(function (newNetID) {
-
                 // Successfully updated or added wifiConfig
                 if(device.platform === "Android" && !(parseInt(device.version.split('.')[0]) >= 10)) {
 					cordova.exec(resolve, reject, "WifiWizard2", "connect", [WifiWizard2.formatWifiString(SSID), bindAll]);
-				}
-
+				} else {
+                    resolve(newNetID);
+                }
                 // Catch error adding/updating network
             }).catch(function (error) {
 
