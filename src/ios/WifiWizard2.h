@@ -26,5 +26,6 @@
 - (void)canConnectToInternet:(CDVInvokedUrlCommand *)command;
 - (void)canPingWifiRouter:(CDVInvokedUrlCommand *)command;
 - (void)canConnectToRouter:(CDVInvokedUrlCommand *)command;
+- (void)iOSNetworkPermission:(CDVInvokedUrlCommand *)command;
 
 @end

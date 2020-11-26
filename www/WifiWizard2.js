@@ -61,7 +61,16 @@ var WifiWizard2 = {
 
         });
     },
+    /**
+     * Handle iOS 14 permission issue
+     * @returns {Promise}
+     */
+    iOSNetworkPermission: function () {
+        return new Promise(function (resolve, reject) {
+            cordova.exec(resolve, reject, "WifiWizard2", "iOSNetworkPermission", [])
+        });
 
+    },
     /**
      * Add wifi network configuration
      * @param wifi  Must be object created by formatWifiConfig()
