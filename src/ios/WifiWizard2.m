@@ -1,10 +1,50 @@
 #import "WifiWizard2.h"
 #include <ifaddrs.h>
+#include <arpa/inet.h>
 #import <net/if.h>
 #import <SystemConfiguration/CaptiveNetwork.h>
-#import <NetworkExtension/NetworkExtension.h>  
+#import <NetworkExtension/NetworkExtension.h>
+#import <CoreLocation/CoreLocation.h>
 
 @implementation WifiWizard2
+
+- (void)getWifiIP:(CDVInvokedUrlCommand*)command {
+    CDVPluginResult *pluginResult = nil;
+	
+    NSString *address = @"error";
+    struct ifaddrs *interfaces = NULL;
+    struct ifaddrs *temp_addr = NULL;
+    int success = 0;
+    // retrieve the current interfaces - returns 0 on success
+    success = getifaddrs(&interfaces);
+    if (success == 0) {
+        // Loop through linked list of interfaces
+        temp_addr = interfaces;
+        while(temp_addr != NULL) {
+            if(temp_addr->ifa_addr->sa_family == AF_INET) {
+                // Check if interface is en0 which is the wifi connection on the iPhone
+                if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
+                    // Get NSString from C String
+                    address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
+
+                }
+
+            }
+
+            temp_addr = temp_addr->ifa_next;
+        }
+    }
+    // Free memory
+    freeifaddrs(interfaces);
+    if (address) {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:address];
+    } else {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Not available"];
+    }
+
+    [self.commandDelegate sendPluginResult:pluginResult
+                                callbackId:command.callbackId];
+}
 
 - (id)fetchSSIDInfo {
     // see http://stackoverflow.com/a/5198968/907720
@@ -196,9 +236,8 @@
 
 - (void)getConnectedSSID:(CDVInvokedUrlCommand*)command {
     CDVPluginResult *pluginResult = nil;
-    NSDictionary *r = [self fetchSSIDInfo];
 
-    NSString *ssid = [r objectForKey:(id)kCNNetworkInfoKeySSID]; //@"SSID"
+    NSString *ssid = [self getWifiSsid]; //@"SSID"
 
     if (ssid && [ssid length]) {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:ssid];
@@ -363,6 +402,42 @@
     [self.commandDelegate sendPluginResult:pluginResult
                                 callbackId:command.callbackId];
 }
+
+- (NSString*) getWifiSsid {
+    if (@available(iOS 13.0, *)) {
+        if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
+            NSLog(@"User has explicitly denied authorization for this application, or location services are disabled in Settings.");
+            //[[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+            return nil;
+        }
+        CLLocationManager* cllocation = [[CLLocationManager alloc] init];
+        if(![CLLocationManager locationServicesEnabled] || [CLLocationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined){
+            [cllocation requestWhenInUseAuthorization];
+            usleep(500);
+            return [self getWifiSsid];
+        }
+    }
+    NSString *wifiName = nil;
+    CFArrayRef wifiInterfaces = CNCopySupportedInterfaces();
+    if (!wifiInterfaces) {
+        return nil;
+    }
+    NSArray *interfaces = (__bridge NSArray *)wifiInterfaces;
+    for (NSString *interfaceName in interfaces) {
+        CFDictionaryRef dictRef = CNCopyCurrentNetworkInfo((__bridge CFStringRef)(interfaceName));
+        
+        if (dictRef) {
+            NSDictionary *networkInfo = (__bridge NSDictionary *)dictRef;
+            NSLog(@"network info -> %@", networkInfo);
+            wifiName = [networkInfo objectForKey:(__bridge NSString *)kCNNetworkInfoKeySSID];
+            CFRelease(dictRef);
+        }
+    }
+    
+    CFRelease(wifiInterfaces);
+    return wifiName;
+}
+
 
 
 @end
