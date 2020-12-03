@@ -1,11 +1,13 @@
 #import "WifiWizard2.h"
-#include <ifaddrs.h>
-#include <arpa/inet.h>
 #import <net/if.h>
 #import <SystemConfiguration/CaptiveNetwork.h>
-#import <NetworkExtension/NetworkExtension.h>  
+#import <NetworkExtension/NetworkExtension.h>
+#import <CoreLocation/CoreLocation.h>
+#include <ifaddrs.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <netinet/in.h> 
+#include <netinet/in.h>
+
 
 @implementation WifiWizard2
 
